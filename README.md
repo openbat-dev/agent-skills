@@ -103,6 +103,19 @@ not coupled to specific tool signatures, just to the patterns
 (`requireWrite`, BOLA filter, etc.). But if the auth ladder changes
 shape, the skills bump too.
 
+## How does this work?
+
+See [HOW-IT-WORKS.md](HOW-IT-WORKS.md) for the end-to-end picture —
+what an agent skill actually is, how skills.sh discovers and distributes
+them, why this repo lives separately from the [openbat
+monorepo](https://openbat.dev), and how the sync flow keeps the two in
+lockstep.
+
+TL;DR — skills are authored upstream, then
+[`scripts/sync-from-monorepo.sh`](scripts/sync-from-monorepo.sh) copies
+them here, the maintainer tags + pushes, and `npx skills add` makes
+them available to every agent on every platform.
+
 ## Contributing
 
 These skills are maintained as a thin export from the
