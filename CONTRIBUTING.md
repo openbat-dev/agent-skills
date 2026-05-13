@@ -5,10 +5,6 @@ These skills are exported from the upstream
 `.claude/skills/` directory. The canonical edits happen there; this
 repo is the distribution surface.
 
-> **First time here?** Read [HOW-IT-WORKS.md](HOW-IT-WORKS.md) for the
-> end-to-end picture (skill format, distribution mechanism, why the
-> monorepo + this repo are separate, how the sync flow works).
-
 ## Reporting a problem
 
 Open an issue at https://github.com/openbat-dev/agent-skills/issues
