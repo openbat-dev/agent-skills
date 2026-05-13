@@ -1,0 +1,233 @@
+---
+name: using-openbat
+description: "Use the OpenBat CLI + MCP to manage chatbots, conversations, analyses, workflows, reports, and experiments end-to-end. Triggers on any mention of OpenBat, chatbot analytics, conversation sentiment, ingest/read/admin/PAT keys, or @openbat/sdk integration."
+source: project
+date_added: "2026-05-13"
+---
+
+# Using OpenBat (CLI + MCP)
+
+OpenBat lets agents create chatbots, capture conversations from an external
+application, run AI-driven analyses, ship workflows that fire webhooks, build
+AI-native reports, and run prompt experiments — all through a CLI
+(`@openbat/cli`) and an MCP server (`@openbat/mcp`) that share a single
+v1 HTTP surface.
+
+This is the **single comprehensive reference**. Per-flow skills exist for
+deeper guidance:
+- `openbat-onboarding` — create + onboard a chatbot (flow 0)
+- `openbat-settings` — keys, webhooks, metadata (flow 1)
+- `openbat-org-admin` — org rename + members + invitations
+- `openbat-analysis` — analysis definitions (flow 2)
+- `openbat-conversations` — time-windowed reads (flow 3)
+- `openbat-users-orgs` — external users + orgs health (flow 4)
+- `openbat-workflows` — workflow DSL → webhook (flow 5)
+- `openbat-reports` — create + chat with AI reports (flow 6)
+- `openbat-experiments` — backtests + prompt publishing (7+8)
+- `openbat-sdk-install` — install + verify SDK in a target project (flow 9)
+- `openbat-safe-mutations` — confirmation patterns, audit log, key hygiene
+
+## When to use this skill
+
+- Any user request mentioning OpenBat, ob_live_*, ob_read_*, ob_admin_*, ob_pat_*
+- Building a chatbot + observability pipeline end-to-end
+- Pulling conversation analytics, sentiment, flags, or outcomes
+- Creating workflows that fire Slack/Discord/custom webhooks
+- Running prompt experiments and publishing prompt versions
+- Adding @openbat/sdk to a Next.js / Node / AI SDK project
+
+## The four key kinds
+
+Stripe-style key kinds, each with a disjoint prefix. Pick the **smallest scope
+that works**:
+
+| Prefix | Kind | Scope | Use for |
+|--------|------|-------|---------|
+| `ob_live_*` | ingest | one chatbot, **write-only** | SDK capture (`OpenBat.recordMessages`) — never paste into CLI/MCP |
+| `ob_read_*` | read | one chatbot, **read-only** | Per-chatbot read tools (CLI/MCP listing, analytics) |
+| `ob_admin_*` | admin | one chatbot, **read+write** | Webhooks, workflows, reports, settings for one chatbot |
+| `ob_pat_*` | PAT | one user across multiple chatbots and orgs | Creating chatbots, org-level operations, CI |
+
+PATs also carry a sub-scope column (`read` or `admin`). A read-scope PAT
+**cannot mutate** — the resolver gates writes on `permission === "write"`.
+
+## Setup
+
+```bash
+npm install -g @openbat/cli
+echo "ob_pat_…" | openbat config set-key --from-stdin   # recommended (stdin)
+# or for one-off testing: openbat --api-key ob_pat_… <cmd>
+openbat auth whoami                                     # confirm scope resolved
+```
+
+For MCP (Claude Desktop / Cursor / any MCP client):
+
+```jsonc
+{
+  "mcpServers": {
+    "openbat": {
+      "command": "npx",
+      "args": ["-y", "@openbat/mcp"],
+      "env": { "OPENBAT_API_KEY": "ob_pat_…" }
+    }
+  }
+}
+```
+
+The MCP server **filters its tool list by key kind**. With `ob_read_*` you see
+only read tools; `ob_admin_*` lights up writes for one chatbot; `ob_pat_*`
+adds `openbat_create_chatbot` and the org tools.
+
+## The 9 flows (mapped to commands + tools)
+
+### Flow 0 — Create a chatbot + onboard
+
+```bash
+openbat chatbots create \
+  --name "Acme Support" \
+  --website https://acme.com \
+  --docs-url https://docs.acme.com
+# stderr: "Ingest API key (ob_live_*) — shown ONCE — store this now: ob_live_…"
+# stdout: { chatbot, dashboardUrl }
+```
+
+MCP: `openbat_create_chatbot { name, websiteUrl?, docsUrl?, mcpUrl?, primaryLanguage? }`.
+Both require a PAT. Capture the ingest key immediately — it's the only
+credential for the SDK in flow 9.
+
+### Flow 1 — Settings: keys, webhooks, custom metadata
+
+```bash
+# Mint an admin key for CI:
+openbat settings keys generate-admin --chatbot $CB --name "CI key" --expires-in-days 30
+
+# Rotate the ingest key (immediately invalidates the old one):
+openbat settings keys rotate-ingest --chatbot $CB
+
+# Webhook CRUD:
+openbat webhooks create --chatbot $CB --name slack-on-flag \
+  --url https://hooks.slack.com/services/T.../B.../X --type slack
+```
+
+Each mint command prints plaintext to **stderr** with a shown-once banner.
+Capture it before continuing.
+
+### Flow 2 — Analysis definitions (user + assistant)
+
+```bash
+openbat analysis list --chatbot $CB --type intent
+openbat analysis list --chatbot $CB --pending
+openbat analysis add --chatbot $CB --type flag --name billing_issue \
+  --display-name "Billing Issue" --description "Customer raises a billing concern"
+```
+
+Slugs must be lowercase snake_case (`[a-z0-9_]+`). Built-in types: `intent`,
+`flag`, `assistant_outcome`, `assistant_issue`.
+
+### Flow 3 — Conversations (time-filtered, default 7d)
+
+```bash
+openbat conversations list --days 7 --limit 50      # last week
+openbat conversations show <conversationId>
+```
+
+MCP: `openbat_list_conversations { page, limit }`. For deeper time-window
+queries, prefer the v1 routes directly.
+
+### Flow 4 — Users / Orgs (external customer health)
+
+```bash
+openbat users list --chatbot $CB --days 30          # 30-day health window
+openbat users list --chatbot $CB --search acme.com
+```
+
+Health metrics are computed by Postgres RPCs (`users_with_health`,
+`orgs_with_health`) scoped to the date window.
+
+### Flow 5 — Workflow (flag → webhook) via DSL
+
+```bash
+# 1. List webhooks to pick one
+openbat webhooks list --chatbot $CB
+
+# 2. Compile a built-in template into the workflow:
+openbat workflows create --chatbot $CB \
+  --name "billing → slack" \
+  --template flag-to-webhook \
+  --trigger-value billing_issue \
+  --webhook $WEBHOOK_ID \
+  --message "User flagged billing: {{user.id}} / {{conversation.id}}"
+```
+
+Templates: `flag-to-webhook`, `outcome-to-webhook`,
+`sentiment-drop-to-webhook`. Power users can author raw xyflow nodes/edges
+via `update_workflow`.
+
+### Flow 6 — AI Reports
+
+```bash
+openbat reports create --chatbot $CB --name "Q3 retention"
+# stderr: "Created report. View it (org members only): /platform/.../reports/..."
+```
+
+Reports are **org-private** — only members of the chatbot's org can open the
+URL. No public sharing.
+
+### Flow 7+8 — Experiments (backtests + prompt publishing)
+
+Experiments / backtests are still primarily a dashboard wizard; the v1
+surface exposes status checks today. Create + chat with reports for
+qualitative comparison, then publish from the dashboard.
+
+### Flow 9 — Add @openbat/sdk to a production app
+
+```bash
+openbat sdk install-instructions --framework next --chatbot $CB
+# Prints copy-pasteable markdown — install, env var, recordMessages snippet.
+openbat sdk verify --chatbot $CB --timeout 60
+# Polls until the first event arrives; exits 2 on timeout.
+```
+
+The SDK uses the **ingest** key (`ob_live_*`), never the CLI/MCP credentials.
+
+## Safety rails (always apply these)
+
+1. **Use the smallest scope that works.** Read-scope PAT for CI dashboards;
+   admin key for one-chatbot ops; full PAT only for chatbot creation and
+   org admin.
+2. **Never paste plaintext keys into chat.** Use `echo "$KEY" | openbat config set-key --from-stdin`
+   or set `OPENBAT_API_KEY` in `.env.local` (chmod 600).
+3. **Capture plaintext once.** Every mint command prints to stderr with a
+   "shown once" banner — pipe to a password manager immediately.
+4. **Confirm before destructive ops.** `delete_chatbot`, `revoke_admin_key`,
+   `delete_webhook` are irreversible. Prefer a dry inventory first
+   (`openbat chatbots list`, `openbat settings keys list-admin`).
+5. **Set `--expires-in-days` on admin keys** unless you have a strong reason.
+   90 days max is a good default.
+6. **Don't run the MCP with an ingest key** — the server refuses on startup.
+   Ingest keys are SDK-only.
+
+## Failure modes you'll see
+
+| HTTP / Tool error                           | What it means                                  | Fix |
+|---------------------------------------------|------------------------------------------------|-----|
+| `401 Unauthorized`                          | Key invalid / wrong kind / revoked / expired   | `openbat auth whoami`; rotate key |
+| `403 Forbidden`                             | Key valid but lacks permission (read PAT trying to mutate; member acting as owner) | Use a higher-scope credential |
+| `404 Not Found` (chatbot id, conversation)  | Object exists in another org/chatbot — 404 not 403 by design (no enumeration) | Pass the right id |
+| `429 Rate limited` + `Retry-After` header   | Per-PAT/admin/chatbot/IP bucket exceeded       | Wait and retry; see `lib/api/tool-rate-limit.ts` for limits |
+| `Tool X requires a Y key or higher`         | MCP tool gating — your key kind is too low     | Set `OPENBAT_API_KEY` to a higher-scope key |
+
+## Architecture (for debugging the surface)
+
+```
+Agent → CLI (HTTPS) ──┐
+                      ├── v1 routes ── dispatchTool ── handler → Supabase
+Agent → MCP (stdio) ──┘                    │
+                                           ├── recordAudit() (api_audit_log)
+                                           └── checkToolRateLimit() (per-tool bucket)
+```
+
+Every authenticated request appears as a row in `api_audit_log`
+(success + failure both). To investigate "who did what when," query that
+table in Supabase Studio. For a full inventory of tools, see
+[lib/openbat-tools/registry.ts](../../lib/openbat-tools/registry.ts).
