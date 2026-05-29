@@ -92,6 +92,14 @@ For each lever group, list the proposed edit + the **evidence** as conversation
 links (`/platform/<chatbotId>/conversations/<id>`). Link — don't paste raw
 conversation content (it may contain customer PII) into a public PR.
 
+- **Shipping a system-prompt fix — two paths:**
+  - *Chatbot fetches its prompt from OpenBat* (`GET /api/v1/prompts`): ship it
+    live without a redeploy — `openbat prompts publish --file <prompt>` (goes
+    live in ~60s). Roll back with `openbat prompts activate <prevVersionId>` or,
+    in an emergency, `openbat prompts kill-switch --on`. Confirm with the user
+    first — this changes the production prompt.
+  - *Chatbot hardcodes its prompt*: edit it in the repo (publishing in OpenBat
+    won't change runtime). See `openbat-prompts`/flow 11 in `using-openbat`.
 - **Repo edits** (system prompt, tool code, retrieval config) require explicit
   user confirmation. Offer a **PR**; never auto-commit to the default branch.
 - **OpenBat mutations** (`openbat analysis add`, `openbat workflows create`,
