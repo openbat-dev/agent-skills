@@ -35,6 +35,17 @@ Pipe to a password manager immediately.
 - List admin keys: admin or PAT
 - Revoke admin: PAT required
 
+## Scoping a key to one chatbot
+
+`ob_read_*` and `ob_admin_*` keys are **scoped to one chatbot server-side** —
+the simplest, safest credential for working on a single chatbot (and for the
+daily-eval / `openbat-optimize` loop). With one of these, the CLI/MCP can only
+ever see that chatbot; nothing to pin.
+
+A `ob_pat_*` spans many chatbots. To keep it locked to one, pin an active
+chatbot — `openbat use <id>` (CLI) or `OPENBAT_CHATBOT_ID` (MCP env). The MCP
+then hard-locks to that chatbot (see `using-openbat` → "Pin to one chatbot").
+
 ## Webhooks
 
 ```bash
