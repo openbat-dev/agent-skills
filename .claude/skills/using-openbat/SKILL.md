@@ -102,7 +102,7 @@ key — it's already one chatbot server-side, so the pin is automatic. The
 prints a `→ chatbot: <name> (<id>)` banner to stderr so the scope is never in
 doubt.
 
-## The 10 flows (mapped to commands + tools)
+## The 11 flows (mapped to commands + tools)
 
 ### Flow 0 — Create a chatbot + onboard
 
@@ -231,6 +231,31 @@ symptom to a fix. The **`openbat-optimize`** skill orchestrates the full loop
 (diagnose against the repo's system prompt / tools / retrieval → apply a PR).
 MCP: `openbat_review { windowMinutes? }`. OpenBat ships no scheduler — wire
 `openbat review` into your own cron / scheduled agent / CI for a daily cadence.
+
+### Flow 11 — Publish the system prompt (live, remote)
+
+For chatbots that **fetch their prompt from OpenBat at runtime** (`GET /api/v1/prompts`),
+the active prompt can be managed remotely — no redeploy:
+
+```bash
+openbat prompts list                       # versions + which is active + kill-switch state
+openbat prompts publish --file prompt.txt  # create a version from the file + set it LIVE
+openbat prompts publish --text "You are…"  # inline (prefer --file for long prompts)
+openbat prompts activate <versionId>       # roll back/forward to a known version
+openbat prompts kill-switch --on           # emergency: SDK falls back to its hardcoded prompt
+openbat prompts kill-switch --off          # resume serving the active published prompt
+```
+
+Writes need an **admin or PAT (write)** key. Changes go live within **~60s** (SDK
+cache TTL). MCP: `openbat_list_prompt_versions`, `openbat_publish_prompt`,
+`openbat_activate_prompt_version`, `openbat_set_prompt_kill_switch`.
+
+**Caveat:** this only changes the running bot if your app fetches its prompt
+from OpenBat. If you hardcode the prompt (and send `systemPromptTemplate` only
+for versioning), publishing here records a version but does NOT change runtime —
+deploy via your own repo instead (see `openbat-optimize`). This closes the
+eval→fix loop for fetch-endpoint chatbots: `openbat review` → edit → `openbat
+prompts publish` → live, with a kill switch to roll back.
 
 ## Safety rails (always apply these)
 
