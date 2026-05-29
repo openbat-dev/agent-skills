@@ -25,6 +25,7 @@ deeper guidance:
 - `openbat-reports` — create + chat with AI reports (flow 6)
 - `openbat-experiments` — backtests + prompt publishing (7+8)
 - `openbat-sdk-install` — install + verify SDK in a target project (flow 9)
+- `openbat-optimize` — daily eval → fix loop: `openbat review` + apply fixes (flow 10)
 - `openbat-safe-mutations` — confirmation patterns, audit log, key hygiene
 
 ## When to use this skill
@@ -78,7 +79,30 @@ The MCP server **filters its tool list by key kind**. With `ob_read_*` you see
 only read tools; `ob_admin_*` lights up writes for one chatbot; `ob_pat_*`
 adds `openbat_create_chatbot` and the org tools.
 
-## The 9 flows (mapped to commands + tools)
+### Pin to one chatbot (hard lock)
+
+Both the CLI and the MCP can lock to a single **active chatbot** so a key that
+can reach many (a PAT) never wanders out of the one you're working on:
+
+```bash
+openbat use <id-or-name>     # persists ~/.openbatrc.activeChatbotId
+openbat use                  # no arg → shows current pin + reachable options
+```
+
+For the MCP, set `OPENBAT_CHATBOT_ID` in the server env (or rely on the
+`openbat use` value in `~/.openbatrc`). When pinned, the MCP **hard-locks**:
+every per-chatbot tool defaults to the pin and rejects a different `chatbotId`,
+`openbat_list_chatbots` returns only the pinned chatbot, and cross-chatbot/org
+tools (`create_chatbot`, `list_orgs`, members) are hidden. To switch, run
+`openbat use <other>` or restart the MCP with a different `OPENBAT_CHATBOT_ID`.
+
+**Simplest single-chatbot setup:** use a chatbot-scoped `ob_read_*` / `ob_admin_*`
+key — it's already one chatbot server-side, so the pin is automatic. The
+`OPENBAT_CHATBOT_ID` pin is the safety net for PAT users. Every data command
+prints a `→ chatbot: <name> (<id>)` banner to stderr so the scope is never in
+doubt.
+
+## The 10 flows (mapped to commands + tools)
 
 ### Flow 0 — Create a chatbot + onboard
 
@@ -189,6 +213,24 @@ openbat sdk verify --chatbot $CB --timeout 60
 ```
 
 The SDK uses the **ingest** key (`ob_live_*`), never the CLI/MCP credentials.
+
+### Flow 10 — Daily eval → fix the chatbot
+
+```bash
+openbat use <chatbot>               # pin one chatbot (see "Pin to one chatbot")
+openbat review --since 24h          # digest: flags, issues, outcomes + reasonings
+openbat review --since 7d --json    # machine-readable for your own daily workflow
+```
+
+`openbat review` returns headline aggregates (with deltas vs the prior window)
+plus clusters of the top issues / flags / intents and failed outcomes — each
+issue cluster carrying representative conversation pointers with the analysis
+`reasoning` + verification fields. Drill into a representative with
+`openbat conversations show <id>` (now returns ALL analyses), then map the
+symptom to a fix. The **`openbat-optimize`** skill orchestrates the full loop
+(diagnose against the repo's system prompt / tools / retrieval → apply a PR).
+MCP: `openbat_review { windowMinutes? }`. OpenBat ships no scheduler — wire
+`openbat review` into your own cron / scheduled agent / CI for a daily cadence.
 
 ## Safety rails (always apply these)
 

@@ -43,10 +43,11 @@ npx skills add openbat-dev/agent-skills@v0.1.0
 
 | Skill | Purpose |
 |---|---|
-| [`using-openbat`](.claude/skills/using-openbat) | **Start here.** Comprehensive reference — auth model, 9 user flows, MCP + CLI command pairs, safety rails, failure-mode recovery. |
+| [`using-openbat`](.claude/skills/using-openbat) | **Start here.** Comprehensive reference — auth model, 10 user flows, MCP + CLI command pairs, safety rails, failure-mode recovery. |
 | [`openbat-onboarding`](.claude/skills/openbat-onboarding) | Create a new chatbot + capture the ingest key. |
 | [`openbat-settings`](.claude/skills/openbat-settings) | Manage keys (ingest / read / admin / PAT), webhooks, custom metadata. |
 | [`openbat-conversations`](.claude/skills/openbat-conversations) | Query conversations + analyses, time-filtered (default last 7 days). |
+| [`openbat-optimize`](.claude/skills/openbat-optimize) | Daily eval → fix loop: pull the `openbat review` digest of recent failures, map each cluster to a lever (prompt / tools / retrieval / new analysis / alert), apply fixes in the chatbot's repo. |
 | [`openbat-workflows`](.claude/skills/openbat-workflows) | Compile DSL templates (`flag-to-webhook`, `outcome-to-webhook`, `sentiment-drop-to-webhook`) into workflows. |
 | [`openbat-sdk-install`](.claude/skills/openbat-sdk-install) | Install + verify `@openbat/sdk` in Node / Next.js / Vercel AI SDK apps. |
 | [`openbat-safe-mutations`](.claude/skills/openbat-safe-mutations) | Cross-cutting safety rules — confirmation patterns, audit log review, key rotation hygiene. |

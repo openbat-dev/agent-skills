@@ -20,12 +20,16 @@ openbat conversations list --days 7 --limit 50
 # Custom window:
 openbat conversations list --from 2026-05-01T00:00:00Z --to 2026-05-13T00:00:00Z
 
-# Detail (messages + per-message sentiments):
+# Detail (messages + ALL per-message analyses: sentiments, intents, flags,
+# assistant outcomes, assistant issues — each with reasoning + verification):
 openbat conversations show <conversationId>
 
 # Analytics:
 openbat analytics overview
 openbat analytics sentiment --days 30
+
+# Daily eval digest (aggregate "what went wrong" — see openbat-optimize):
+openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
 ```
 
 ## MCP
@@ -36,6 +40,7 @@ openbat analytics sentiment --days 30
 | `openbat_get_conversation`   | `{ id: uuid }` |
 | `openbat_analytics_overview` | `{}` |
 | `openbat_analytics_sentiment` | `{ days?: 1-90 }` |
+| `openbat_review`             | `{ windowMinutes?: 1-43200 }` |
 
 ## Filter recipes
 
@@ -49,10 +54,15 @@ openbat conversations show $CONV_ID --json | jq '.messages[] | {role, content}'
 
 ## Per-message analyses
 
-`openbat conversations show` returns each message with its `user_sentiments`
-array. For deeper per-analysis-type queries (intents, flags, outcomes,
-issues), use the platform chat's tools — they expose dedicated query
-endpoints scoped to a chatbot.
+`openbat conversations show` returns each message with **all** of its analyses:
+`user_sentiments`, `user_intents`, `user_flags`, `assistant_outcomes`, and
+`assistant_issues` — each carrying its `reasoning` plus verification fields
+(`verification_source`, `answer_available`, `verification_type`, `severity`).
+This is how you read **why** a message was flagged.
+
+For the aggregate "what went wrong over a window" view (top issues / flags /
+outcomes with deltas + representative pointers), use `openbat review` and the
+**`openbat-optimize`** skill.
 
 ## Gotchas
 
