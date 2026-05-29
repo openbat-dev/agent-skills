@@ -106,11 +106,20 @@ conversation content (it may contain customer PII) into a public PR.
   settings writes): first run the **`openbat-plan-audit`** skill on the change,
   then follow **`openbat-safe-mutations`** (list-first, confirm, smallest scope).
 
-## 6. (Phase 2) Validate the fix with a backtest
+## 6. Validate the fix with a backtest (closes the loop)
 
-Once exposed, replay the flagged conversations against the candidate prompt and
-read the verdict (resolved / still-flagged / new-flags) before shipping — see
-the `openbat-experiments` skill. Closes the eval loop.
+Before shipping a prompt fix, replay the flagged conversations under the
+candidate version and read the verdict tally:
+
+```bash
+openbat backtests create --name "fix v2" --candidate-prompt <versionId> \
+  --flags <flag1,flag2> --sample-size 50      # requires a PAT key
+openbat backtests status <backtestId>          # still_flagged / resolved / new_flag / unchanged_clean
+```
+
+Ship only if `resolved` dominates and `new_flag` is ~0 — via `openbat prompts
+publish --wait` (fetch-endpoint chatbots) or a repo PR. MCP:
+`openbat_create_backtest`, `openbat_get_backtest_status`.
 
 ## Wire into your own daily workflow
 
