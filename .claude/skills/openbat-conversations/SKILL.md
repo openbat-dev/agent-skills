@@ -44,11 +44,12 @@ openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
 
 | Tool | Args |
 |------|------|
-| `openbat_list_conversations` | `{ page?, limit? }` |
-| `openbat_get_conversation`   | `{ id: uuid }` |
-| `openbat_analytics_overview` | `{}` |
-| `openbat_analytics_sentiment` | `{ days?: 1-90 }` |
-| `openbat_review`             | `{ windowMinutes?: 1-43200 }` |
+| `openbat_list_conversations` | `{ chatbotId: uuid, page?, limit?, from?, to?, kind?: organic\|probe\|all }` (chatbotId optional only when the server is pinned) |
+| `openbat_get_conversation`   | `{ chatbotId: uuid, id: uuid }` |
+| `openbat_await_analysis`     | `{ conversationId: uuid \| obprobe_… }` — poll until analyzed |
+| `openbat_analytics_overview` | `{ chatbotId: uuid }` |
+| `openbat_analytics_sentiment` | `{ chatbotId: uuid, days?: 1-90 }` |
+| `openbat_review`             | `{ chatbotId: uuid, windowMinutes?: 1-43200 }` |
 
 ## Filter recipes
 
