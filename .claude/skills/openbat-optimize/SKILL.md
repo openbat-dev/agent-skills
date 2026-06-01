@@ -7,11 +7,20 @@ date_added: "2026-05-29"
 
 # OpenBat — Optimize a chatbot from its conversations
 
-The daily eval loop: OpenBat tells you **what went wrong** (flags, issues,
-outcomes, and the analysis *reasoning* behind each), and you — running inside
-the chatbot's own repo — diagnose **why** against the actual source and apply
-the fix. OpenBat ships no scheduler: a customer wires `openbat review` into
-their own cron / scheduled agent / CI and feeds the output to this skill.
+The eval loop has two halves, and OpenBat now does both:
+1. **Diagnose (passive):** OpenBat tells you **what went wrong** in REAL traffic
+   (flags, issues, outcomes + the analysis *reasoning*), and you — running inside
+   the chatbot's own repo — diagnose **why** against the actual source.
+2. **Validate (active):** you **send synthetic test queries** to the chatbot
+   (`openbat probe` / `openbat eval`), OpenBat analyzes them, and you read the
+   verdict to confirm your fix actually worked — before and after, as a diff.
+
+Synthetic (probe) traffic is captured as `kind=probe` and is **excluded from
+organic `review`/analytics**, so testing never skews real metrics. OpenBat ships
+no scheduler: wire `openbat optimize` / `openbat review` into your own cron /
+scheduled agent / CI and feed the output to this skill. Fastest start:
+`openbat optimize` (review + active prompt + analysis defs + a probe plan, in one
+read-only call).
 
 **This skill operates on exactly ONE chatbot per run.** The reasoning happens
 here, client-side, because only this repo holds the system prompt, tools, and
@@ -106,10 +115,37 @@ conversation content (it may contain customer PII) into a public PR.
   settings writes): first run the **`openbat-plan-audit`** skill on the change,
   then follow **`openbat-safe-mutations`** (list-first, confirm, smallest scope).
 
-## 6. Validate the fix with a backtest (closes the loop)
+## 6. Validate the fix by PROBING (closes the loop)
 
-Before shipping a prompt fix, replay the flagged conversations under the
-candidate version and read the verdict tally:
+Don't ship a fix on faith — test it against the live chatbot with synthetic
+queries and read OpenBat's verdict. Two complementary tools:
+
+**A. Fresh synthetic queries (`probe` / `eval`) — the active loop.** Drive the
+chatbot with new questions targeting the failure, let it capture as `kind=probe`,
+and read the analysis. Declare an adapter once (`openbat.probe.json`: how to call
+your chatbot), then:
+
+```bash
+openbat probe "the exact question that failed organically"   # one turn → verdict
+# Or a whole suite, diffed before/after the fix to catch regressions:
+openbat eval run --suite golden.json --out before.json
+#   …apply the fix (repo edit, or a candidate prompt — see below)…
+openbat eval run --suite golden.json --out after.json
+openbat eval diff before.json after.json       # exit 1 if anything regressed
+```
+
+Test a candidate prompt **without shipping**: `openbat prompts create-draft
+--file new-prompt.txt` → probe/eval against that version (your chatbot fetches it
+via the SDK's `versionOverride`, fed a `{{candidate}}` adapter field) → only
+`openbat prompts activate <versionId>` once the eval passes. MCP equivalents:
+`openbat_probe`, `openbat_await_analysis`, `openbat_create_draft_prompt`,
+`openbat_optimize_context`. (Under MCP you issue the chatbot call and loop
+`openbat_probe` → `openbat_await_analysis` → `openbat_get_conversation` yourself
+— OpenBat never calls your chatbot.) See the **`openbat-eval`** skill for the full
+active loop.
+
+**B. Replay historical flagged conversations (`backtests`).** Complements probing
+when you want to re-test the SAME real conversations that failed:
 
 ```bash
 openbat backtests create --name "fix v2" --candidate-prompt <versionId> \
@@ -117,9 +153,9 @@ openbat backtests create --name "fix v2" --candidate-prompt <versionId> \
 openbat backtests status <backtestId>          # still_flagged / resolved / new_flag / unchanged_clean
 ```
 
-Ship only if `resolved` dominates and `new_flag` is ~0 — via `openbat prompts
-publish --wait` (fetch-endpoint chatbots) or a repo PR. MCP:
-`openbat_create_backtest`, `openbat_get_backtest_status`.
+Ship only if the verdict is clean (probe issues resolved / `resolved` dominates,
+`new_flag` ~0) — via `openbat prompts publish --wait` (fetch-endpoint chatbots),
+`openbat prompts activate <draftId>`, or a repo PR.
 
 ## Wire into your own daily workflow
 

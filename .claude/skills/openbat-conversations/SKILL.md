@@ -24,6 +24,14 @@ openbat conversations list --from 2026-05-01T00:00:00Z --to 2026-05-13T00:00:00Z
 # assistant outcomes, assistant issues — each with reasoning + verification):
 openbat conversations show <conversationId>
 
+# Wait until a conversation's messages are fully analyzed (analysis is async).
+# Accepts an internal id OR a probe's obprobe_ id. Exit 0 done, 2 on timeout:
+openbat conversations await <conversationId> --timeout 90
+
+# Synthetic-traffic filter (probe/eval conversations are hidden by default):
+openbat conversations list --synthetic          # ONLY probe/eval conversations
+openbat conversations list --include-synthetic   # organic + synthetic
+
 # Analytics:
 openbat analytics overview
 openbat analytics sentiment --days 30
@@ -36,11 +44,12 @@ openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
 
 | Tool | Args |
 |------|------|
-| `openbat_list_conversations` | `{ page?, limit? }` |
-| `openbat_get_conversation`   | `{ id: uuid }` |
-| `openbat_analytics_overview` | `{}` |
-| `openbat_analytics_sentiment` | `{ days?: 1-90 }` |
-| `openbat_review`             | `{ windowMinutes?: 1-43200 }` |
+| `openbat_list_conversations` | `{ chatbotId: uuid, page?, limit?, from?, to?, kind?: organic\|probe\|all }` (chatbotId optional only when the server is pinned) |
+| `openbat_get_conversation`   | `{ chatbotId: uuid, id: uuid }` |
+| `openbat_await_analysis`     | `{ conversationId: uuid \| obprobe_… }` — poll until analyzed |
+| `openbat_analytics_overview` | `{ chatbotId: uuid }` |
+| `openbat_analytics_sentiment` | `{ chatbotId: uuid, days?: 1-90 }` |
+| `openbat_review`             | `{ chatbotId: uuid, windowMinutes?: 1-43200 }` |
 
 ## Filter recipes
 
