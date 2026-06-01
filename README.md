@@ -1,5 +1,7 @@
 # OpenBat agent skills
 
+[![skills.sh](https://skills.sh/b/openbat-dev/agent-skills)](https://skills.sh/openbat-dev/agent-skills)
+
 Procedural knowledge for AI agents working with [OpenBat](https://openbat.dev) —
 distillable into Claude Code, Cursor, Copilot, Gemini, and any
 Claude-compatible MCP client via the [skills.sh](https://skills.sh)

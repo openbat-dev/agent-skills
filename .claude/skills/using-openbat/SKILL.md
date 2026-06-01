@@ -102,7 +102,7 @@ key — it's already one chatbot server-side, so the pin is automatic. The
 prints a `→ chatbot: <name> (<id>)` banner to stderr so the scope is never in
 doubt.
 
-## The 11 flows (mapped to commands + tools)
+## The 12 flows (mapped to commands + tools)
 
 ### Flow 0 — Create a chatbot + onboard
 
@@ -244,11 +244,17 @@ openbat prompts publish --text "You are…"  # inline (prefer --file for long pr
 openbat prompts activate <versionId>       # roll back/forward to a known version
 openbat prompts kill-switch --on           # emergency: SDK falls back to its hardcoded prompt
 openbat prompts kill-switch --off          # resume serving the active published prompt
+openbat prompts show <versionId>           # fetch a version's full template TEXT (list shows only hashes)
+openbat prompts active                     # what the server resolves to RIGHT NOW (confirm propagation)
+openbat prompts publish --file p.txt --wait  # block until the server confirms the new version is live
 ```
 
-Writes need an **admin or PAT (write)** key. Changes go live within **~60s** (SDK
-cache TTL). MCP: `openbat_list_prompt_versions`, `openbat_publish_prompt`,
-`openbat_activate_prompt_version`, `openbat_set_prompt_kill_switch`.
+Writes need an **admin or PAT (write)** key. A publish/activate/kill-switch
+busts the server cache immediately; live SDK processes converge within their
+**~60s** fetch-cache TTL. MCP: `openbat_list_prompt_versions`,
+`openbat_get_prompt_version`, `openbat_get_active_prompt`,
+`openbat_publish_prompt`, `openbat_activate_prompt_version`,
+`openbat_set_prompt_kill_switch`.
 
 **Caveat:** this only changes the running bot if your app fetches its prompt
 from OpenBat. If you hardcode the prompt (and send `systemPromptTemplate` only
@@ -256,6 +262,18 @@ for versioning), publishing here records a version but does NOT change runtime �
 deploy via your own repo instead (see `openbat-optimize`). This closes the
 eval→fix loop for fetch-endpoint chatbots: `openbat review` → edit → `openbat
 prompts publish` → live, with a kill switch to roll back.
+
+### Flow 12 — Validate a prompt fix against flagged conversations (backtest)
+
+```bash
+openbat backtests create --name "fix v2" --candidate-prompt <versionId> \
+  --flags churn_risk,billing_issue --sample-size 50   # PAT key required
+openbat backtests status <backtestId>   # poll: still_flagged / resolved / new_flag / unchanged_clean
+```
+
+Replays your **flagged** conversations under a candidate prompt version and
+tallies whether each flag would now resolve — the eval loop-closer before you
+publish. MCP: `openbat_create_backtest`, `openbat_get_backtest_status`.
 
 ## Safety rails (always apply these)
 
