@@ -56,10 +56,18 @@ PATs also carry a sub-scope column (`read` or `admin`). A read-scope PAT
 
 ```bash
 npm install -g @openbat/cli
-echo "ob_pat_…" | openbat config set-key --from-stdin   # recommended (stdin)
+openbat register                                        # NEW account — pending owner approval (or --browser)
+openbat login                                           # once approved: browser/device sign-in installs a PAT
+# or paste an existing PAT directly:
+echo "ob_pat_…" | openbat config set-key --from-stdin   # (stdin keeps it out of shell history)
 # or for one-off testing: openbat --api-key ob_pat_… <cmd>
 openbat auth whoami                                     # confirm scope resolved
 ```
+
+`openbat register` creates the account from the terminal but ends at
+"pending approval" — it never returns a key (a pending user can't mint one).
+After the owner approves, `openbat login` does the browser/device handshake and
+installs a PAT. Plaintext passwords are only sent over HTTPS/localhost.
 
 For MCP (Claude Desktop / Cursor / any MCP client):
 
@@ -114,6 +122,22 @@ openbat chatbots create \
 # stderr: "Ingest API key (ob_live_*) — shown ONCE — store this now: ob_live_…"
 # stdout: { chatbot, dashboardUrl }
 ```
+
+**Full onboarding in the terminal** — `openbat onboard` runs the entire
+product-onboarding flow (AI extraction → confirm → pick analysis categories →
+personas + calibration → SDK verify → complete), no dashboard required:
+
+```bash
+openbat onboard --create "Acme Support"      # create + onboard in one shot
+openbat onboard                              # onboard the active chatbot
+openbat onboard --yes --website https://acme.com --no-verify   # CI / agent
+```
+
+Each step is also a registry tool, so an MCP agent has parity:
+`openbat_set_onboarding_data`, `openbat_extract_product_intelligence`,
+`openbat_seed_personas`, `openbat_generate_calibration`,
+`openbat_get_calibration_status`, `openbat_complete_onboarding` (→ the
+`/api/v1/chatbots/{id}/onboarding/*` routes). See the `openbat-onboarding` skill.
 
 MCP: `openbat_create_chatbot { name, websiteUrl?, docsUrl?, mcpUrl?, primaryLanguage? }`.
 Both require a PAT. Capture the ingest key immediately — it's the only
