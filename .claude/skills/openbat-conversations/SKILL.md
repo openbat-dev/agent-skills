@@ -36,11 +36,13 @@ openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
 
 | Tool | Args |
 |------|------|
-| `openbat_list_conversations` | `{ page?, limit? }` |
-| `openbat_get_conversation`   | `{ id: uuid }` |
-| `openbat_analytics_overview` | `{}` |
-| `openbat_analytics_sentiment` | `{ days?: 1-90 }` |
-| `openbat_review`             | `{ windowMinutes?: 1-43200 }` |
+| `openbat_list_conversations` | `{ chatbotId, page?, limit?, from?, to?, kind? }` |
+| `openbat_get_conversation`   | `{ chatbotId, id: uuid }` |
+| `openbat_analytics_overview` | `{ chatbotId }` |
+| `openbat_analytics_sentiment` | `{ chatbotId, days?: 1-90 }` |
+| `openbat_review`             | `{ chatbotId, windowMinutes?: 1-43200 }` |
+
+If the MCP server is pinned with `OPENBAT_CHATBOT_ID`, per-chatbot tools can omit `chatbotId`; otherwise pass the id returned by `openbat_list_chatbots`.
 
 ## Filter recipes
 
