@@ -39,7 +39,7 @@ openbat chatbots create \
 Output:
 - **stderr**: the new ingest key (`ob_live_*`) inside a "shown ONCE" banner.
   Capture it immediately — there is no recovery path.
-- **stdout** (JSON-pipeable): `{ chatbot: { id, name, created_at, organization_id, api_key_prefix }, dashboardUrl }`.
+- **stdout** (JSON-pipeable): `{ chatbot, ingestApiKey, dashboardUrl }`. The plaintext ingest key is also treated as shown-once; store it immediately.
 
 ## 2. Full onboarding (interactive, CLI)
 
@@ -54,7 +54,7 @@ openbat onboard --yes --website https://acme.com --no-verify   # CI / headless
 ```
 
 Sequence (each step = a v1 endpoint, also available as MCP tools):
-1. resolve/create the chatbot (surfaces the ingest key once),
+1. resolve/create the chatbot (surfaces the ingest key once via `POST /api/v1/chatbots`),
 2. **extract** product intelligence from the website/docs (Gemini, ~30-120s; also seeds personas),
 3. confirm/edit the extracted summary,
 4. pick which of the **6 analysis categories** to enable (`sentiment`, `intent`, `flag`, `ai_literacy`, `assistant_outcome`, `assistant_issue`),
@@ -82,7 +82,7 @@ Onboarding tools (admin/PAT for writes, read for status):
 `openbat_set_onboarding_data`, `openbat_extract_product_intelligence`,
 `openbat_seed_personas`, `openbat_generate_calibration`,
 `openbat_get_calibration_status`, `openbat_complete_onboarding`. Each maps 1:1
-to a `/api/v1/chatbots/{id}/onboarding/*` route, so CLI and MCP share behavior.
+to a `/api/v1/chatbots/{id}/onboarding/*` route on the public v1 CLI/MCP surface, so CLI and MCP share behavior.
 Account registration is **not** an MCP tool (no token to mint while pending).
 
 ## After creation

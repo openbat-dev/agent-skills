@@ -69,7 +69,7 @@ You'll also need an OpenBat API key. Sign up at https://openbat.dev to mint one.
 ## Why these are skills
 
 `@openbat/cli` and `@openbat/mcp` are intentionally generic — they
-expose 44 tools across 9 user flows. An agent confronted with all 44
+expose 41 MCP tools across the public v1 CLI/MCP REST surface. An agent confronted with all 41
 tools and no procedural guidance will plausibly hallucinate inputs,
 choose the wrong key kind, or call destructive operations without
 confirmation.

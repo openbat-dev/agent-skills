@@ -52,7 +52,7 @@ openbat review --since 7d --json    # machine-readable for a script/agent
 Returns headline aggregates (with deltas vs the prior equal-length window) +
 clusters of top **issues / flags / intents** and **failed outcomes**, each
 issue carrying representative conversation pointers with the analysis
-`reasoning` and verification fields. MCP equivalent: `openbat_review { windowMinutes? }`.
+`reasoning` and verification fields. MCP equivalent: `openbat_review { chatbotId, windowMinutes? }`.
 
 ## 2. Drill into the representatives
 
