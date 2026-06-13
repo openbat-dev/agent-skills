@@ -179,8 +179,7 @@ openbat conversations list --days 7 --limit 50      # last week
 openbat conversations show <conversationId>
 ```
 
-MCP: `openbat_list_conversations { page, limit }`. For deeper time-window
-queries, prefer the v1 routes directly.
+MCP: `openbat_list_conversations { chatbotId, page?, limit?, from?, to?, kind? }` and `openbat_get_conversation { chatbotId, id }`. If the MCP is pinned with `OPENBAT_CHATBOT_ID`, `chatbotId` may be omitted for per-chatbot tools.
 
 ### Flow 4 — Users / Orgs (external customer health)
 
@@ -223,9 +222,7 @@ URL. No public sharing.
 
 ### Flow 7+8 — Experiments (backtests + prompt publishing)
 
-Experiments / backtests are still primarily a dashboard wizard; the v1
-surface exposes status checks today. Create + chat with reports for
-qualitative comparison, then publish from the dashboard.
+Backtests are available from the public v1 CLI/MCP surface: create a run with a PAT, poll status, then publish only after the verdict tally is clean. The dashboard remains the richer visual workflow for experiment review.
 
 ### Flow 9 — Add @openbat/sdk to a production app
 
@@ -253,7 +250,7 @@ issue cluster carrying representative conversation pointers with the analysis
 `openbat conversations show <id>` (now returns ALL analyses), then map the
 symptom to a fix. The **`openbat-optimize`** skill orchestrates the full loop
 (diagnose against the repo's system prompt / tools / retrieval → apply a PR).
-MCP: `openbat_review { windowMinutes? }`. OpenBat ships no scheduler — wire
+MCP: `openbat_review { chatbotId, windowMinutes? }` (or omit `chatbotId` when pinned). OpenBat ships no scheduler — wire
 `openbat review` into your own cron / scheduled agent / CI for a daily cadence.
 
 ### Flow 11 — Publish the system prompt (live, remote)
@@ -338,5 +335,4 @@ Agent → MCP (stdio) ──┘                    │
 
 Every authenticated request appears as a row in `api_audit_log`
 (success + failure both). To investigate "who did what when," query that
-table in Supabase Studio. For a full inventory of tools, see
-[lib/openbat-tools/registry.ts](../../lib/openbat-tools/registry.ts).
+table in Supabase Studio. For the authoritative monorepo contract, see `packages/api/src/public-v1/surface.ts` (HTTP routes), `packages/api/src/tool-surface.ts` (CLI/MCP tool surface), and `packages/mcp/src/tools.ts` (MCP tool definitions).

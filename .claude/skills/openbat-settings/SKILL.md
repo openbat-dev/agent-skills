@@ -67,9 +67,7 @@ openbat settings update --chatbot $CB \
   --language en
 ```
 
-The allowlist of settable keys is enforced server-side
-(`settingsUpdateSchema` in `lib/actions/chatbots.ts`). Unknown keys are
-rejected to prevent property-level authorization issues.
+The allowlist of settable keys is enforced server-side by the shared API router and public v1 tool handler. Unknown keys are rejected to prevent property-level authorization issues.
 
 ## Custom metadata fields
 
@@ -80,8 +78,7 @@ as `pending` and can be accepted or denied:
 # CLI command not yet exposed — use the dashboard or MCP for now.
 ```
 
-MCP tools `openbat_list_metadata_fields` and `openbat_update_metadata_field`
-support both flows.
+MCP tools `openbat_list_metadata_fields` and `openbat_update_metadata_field` support both flows; `openbat_update_metadata_field` accepts `fieldKey` (preferred) or `fieldId` when callers already have the field id.
 
 ## Gotchas
 

@@ -51,6 +51,8 @@ openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
 | `openbat_analytics_sentiment` | `{ chatbotId: uuid, days?: 1-90 }` |
 | `openbat_review`             | `{ chatbotId: uuid, windowMinutes?: 1-43200 }` |
 
+If the MCP server is pinned with `OPENBAT_CHATBOT_ID`, per-chatbot tools can omit `chatbotId`; otherwise pass the id returned by `openbat_list_chatbots`.
+
 ## Filter recipes
 
 ```bash
