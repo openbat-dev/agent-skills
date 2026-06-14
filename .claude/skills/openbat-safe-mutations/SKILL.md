@@ -28,6 +28,27 @@ firing one:
 3. **For chatbot deletion, type the chatbot name as `--confirm`.** The
    tool requires the literal name match to fire.
 
+## Preview with `--dry-run`
+
+Every CLI command takes a global `--dry-run` (or `OPENBAT_DRY_RUN=1`). Mutating
+requests (POST/PATCH/DELETE) are **not sent** — the CLI prints the exact request
+it *would* make (key-redacted) to stderr and returns a placeholder; reads still
+run. Use it to confirm a destructive or publishing command before firing it for
+real, and in CI to validate a pipeline without side effects:
+
+```bash
+openbat prompts publish --chatbot $CB --file new.txt --dry-run   # shows the would-be POST, sends nothing
+openbat webhooks delete --chatbot $CB --webhook $ID --dry-run
+```
+
+## Check the setup with `openbat doctor`
+
+`openbat doctor` (alias `status`) is a **non-fatal** diagnostic — it never exits
+non-zero on a bad/missing key. It reports the credential kind + source, base URL,
+active chatbot, config path, and (with a usable key, outside `--dry-run`) probes
+`/api/v1/chatbots` for reachability. Run it first when auth or scoping is
+unclear, instead of `auth whoami` (which fatals on a bad key).
+
 ## Key hygiene
 
 | Action | Frequency | How to recover |

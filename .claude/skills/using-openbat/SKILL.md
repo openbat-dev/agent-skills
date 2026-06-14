@@ -21,7 +21,8 @@ backtests/prompt publishing, org admin) are documented in this skill's body:
 - `openbat-settings` — keys, webhooks, metadata (flow 1)
 - `openbat-conversations` — time-windowed reads (flow 3)
 - `openbat-workflows` — workflow DSL → webhook (flow 5)
-- `openbat-sdk-install` — install + verify SDK in a target project (flow 9)
+- `openbat-sdk-install` — install + verify SDK in a target project (flow 9); also `openbat wizard` (drive your own coding agent) + `openbat init`
+- `openbat-skills-store` — create/version/read a chatbot's managed skills (`openbat_*_skill` MCP tools + SDK `skills.get`)
 - `openbat-optimize` — daily eval → fix loop: `openbat review` + apply fixes (flow 10)
 - `openbat-eval` — active probe/eval validation loop before shipping a fix
 - `openbat-safe-mutations` — confirmation patterns, audit log, key hygiene

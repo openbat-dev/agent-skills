@@ -7,6 +7,26 @@ date_added: "2026-05-13"
 
 # OpenBat — Install the SDK in production
 
+## Fastest path — `openbat init` / `openbat wizard`
+
+Two CLI front doors automate the manual steps below:
+
+- **`openbat init`** (alias of `openbat onboard`) — deterministic, no LLM.
+  Resolves/creates a chatbot, enables analysis, prints the paste-ready SDK
+  snippet, then polls for the first event. Add `--create "<name>"` to mint a
+  fresh chatbot + ingest key in one shot.
+- **`openbat wizard`** — drives the user's OWN installed coding agent
+  (Claude Code / Codex / Gemini / Cursor / opencode / aider) to wire the SDK
+  into the project. It **refuses (exit 1) if no agent is installed**,
+  auto-launches `openbat login` if unauthenticated, writes
+  `OPENBAT_API_KEY` to `.env.local` (mode 0600, never on the agent's argv),
+  installs this skill bundle for the agent, then runs `openbat sdk verify`.
+  Flags: `--agent <id>`, `--create <name>`, `--dir <path>`, `--stack <hint>`,
+  `--no-verify`, `--dry-run`.
+
+Prefer these for new integrations; the manual steps below are the fallback /
+reference (and what the wizard's agent follows).
+
 ## Prereq
 
 A chatbot must exist + you need its **ingest key** (`ob_live_*`).
@@ -50,6 +70,20 @@ await openbat.recordMessages({
 `recordMessages` is fire-and-forget safe — network errors are swallowed
 to the console, never thrown to your handler. Latency is dominated by
 the response time of the OpenBat ingest endpoint.
+
+To observe failures (e.g. alert on `401`/`429`) without breaking the
+never-throw contract, pass `onError` to the constructor — it receives only
+`{ phase, status?, code? }` (never the response body), and anything it throws
+is caught:
+
+```ts
+const openbat = new OpenBat({
+  apiKey: process.env.OPENBAT_API_KEY!,
+  onError: ({ phase, status, code }) => {
+    console.warn(`openbat capture failed: ${phase} ${status ?? ""} ${code ?? ""}`);
+  },
+});
+```
 
 ## Wire-up — Vercel AI SDK
 
