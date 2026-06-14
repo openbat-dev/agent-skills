@@ -84,18 +84,57 @@ openbat sdk verify --chatbot $CB --timeout 60
 The CLI runs against a **read** or **admin** key (not the ingest key
 used by the SDK — keep those separate).
 
-## Optional — server-managed system prompts
+## Optional — OpenBat-managed system prompts
 
 ```ts
-const { text, template, source } = await openbat.prompts.getSystem({
-  fallback: HARDCODED_PROMPT,
-  conversationId,
-  // mode: "instant_fallback" returns fallback immediately, fetches in BG
+const promptVariables = {
+  company: "Acme",
+  "user.name": "Nina",
+  "plan-tier": "pro",
+};
+
+const { text: system, template, missingVariables } =
+  await openbat.prompts.getSystem({
+    fallback: HARDCODED_PROMPT,
+    variables: promptVariables,
+    conversationId,
+  });
+
+if (missingVariables.length > 0) {
+  throw new Error(`Missing prompt variables: ${missingVariables.join(", ")}`);
+}
+
+const result = streamText({
+  model,
+  system,
+  messages,
+  onFinish: async ({ text }) => {
+    await openbat.recordMessages({
+      conversationId,
+      systemPromptTemplate: template,
+      systemPromptVariables: promptVariables,
+      messages: [
+        { role: "user", content: userText },
+        { role: "assistant", content: text },
+      ],
+    });
+  },
 });
+
+return result.toUIMessageStreamResponse();
 ```
 
-This lets you publish prompt versions from the dashboard's experiments
-flow without redeploying the app.
+`client.prompts.getSystem()` returns rendered `text`, the unrendered `template`
+that should be sent back as `systemPromptTemplate`, the `source` (`remote`,
+`cache`, `fallback`, or `kill_switch`), and `missingVariables`. Variable names
+may include dots and hyphens. Missing variables are reported and left as
+`{{name}}` rather than silently blanked.
+
+For production apps with a database, prefer the SDK's `onPromptStateChange`
+callback pattern: OpenBat pushes dashboard prompt updates back through the
+existing capture response, your app upserts the prompt into its own DB, and
+future requests read locally. Use `prompts.getSystem()` when you need the
+single-line runtime-fetch path or cannot host a prompt table.
 
 ## Optional — skill-aware verification
 

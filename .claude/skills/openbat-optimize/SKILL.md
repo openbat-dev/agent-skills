@@ -107,10 +107,14 @@ conversation content (it may contain customer PII) into a public PR.
 
 - **Shipping a system-prompt fix — two paths:**
   - *Chatbot fetches its prompt from OpenBat* (`GET /api/v1/prompts`): ship it
-    live without a redeploy — `openbat prompts publish --file <prompt>` (goes
-    live in ~60s). Roll back with `openbat prompts activate <prevVersionId>` or,
-    in an emergency, `openbat prompts kill-switch --on`. Confirm with the user
-    first — this changes the production prompt.
+    live without a redeploy. First run `openbat prompts render --file <prompt>`
+    with representative `--var key=value` inputs, then `openbat prompts stage
+    --file <prompt>` for a non-live candidate, validate it, and only then
+    `openbat prompts publish --file <prompt> --wait` or
+    `openbat prompts activate <stagedVersionId>`. Roll back with
+    `openbat prompts activate <prevVersionId>` or, in an emergency,
+    `openbat prompts kill-switch --on`. Confirm with the user first — publish,
+    activate, and kill-switch changes affect production.
   - *Chatbot hardcodes its prompt*: edit it in the repo (publishing in OpenBat
     won't change runtime). See `openbat-prompts`/flow 11 in `using-openbat`.
 - **Repo edits** (system prompt, tool code, retrieval config) require explicit
@@ -138,15 +142,19 @@ openbat eval run --suite golden.json --out after.json
 openbat eval diff before.json after.json       # exit 1 if anything regressed
 ```
 
-Test a candidate prompt **without shipping**: `openbat prompts create-draft
---file new-prompt.txt` → probe/eval against that version (your chatbot fetches it
-via the SDK's `versionOverride`, fed a `{{candidate}}` adapter field) → only
-`openbat prompts activate <versionId>` once the eval passes. MCP equivalents:
-`openbat_probe`, `openbat_await_analysis`, `openbat_create_draft_prompt`,
+Test a candidate prompt **without shipping**: `openbat prompts render --file
+new-prompt.txt --var company=Acme` (local variable preview) →
+`openbat prompts stage --file new-prompt.txt` (creates a non-live version) →
+probe/eval against that version (your chatbot fetches it via the SDK's
+`versionOverride`, fed a `{{candidate}}` adapter field) → only `openbat prompts
+activate <versionId>` once the eval passes. `create-draft` is just the legacy
+alias for `stage`; new docs and agent output should say `stage`. MCP
+equivalents: `openbat_render_prompt_template`, `openbat_probe`,
+`openbat_await_analysis`, `openbat_create_draft_prompt`,
 `openbat_optimize_context`. (Under MCP you issue the chatbot call and loop
 `openbat_probe` → `openbat_await_analysis` → `openbat_get_conversation` yourself
-— OpenBat never calls your chatbot.) See the **`openbat-eval`** skill for the full
-active loop.
+— OpenBat never calls your chatbot.) See the **`openbat-eval`** skill for the
+full active loop.
 
 **B. Replay historical flagged conversations (`backtests`).** Complements probing
 when you want to re-test the SAME real conversations that failed:

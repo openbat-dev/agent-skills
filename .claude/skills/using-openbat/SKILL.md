@@ -26,6 +26,7 @@ deeper guidance:
 - `openbat-experiments` — backtests + prompt publishing (7+8)
 - `openbat-sdk-install` — install + verify SDK in a target project (flow 9)
 - `openbat-optimize` — daily eval → fix loop: `openbat review` + apply fixes (flow 10)
+- `openbat-eval` — active probe/eval validation loop before shipping a fix
 - `openbat-safe-mutations` — confirmation patterns, audit log, key hygiene
 
 ## When to use this skill
@@ -34,7 +35,7 @@ deeper guidance:
 - Building a chatbot + observability pipeline end-to-end
 - Pulling conversation analytics, sentiment, flags, or outcomes
 - Creating workflows that fire Slack/Discord/custom webhooks
-- Running prompt experiments and publishing prompt versions
+- Running prompt experiments, rendering prompt variables, and staging/publishing prompt versions
 - Adding @openbat/sdk to a Next.js / Node / AI SDK project
 
 ## The four key kinds
@@ -258,29 +259,40 @@ stale skill, missing skill, or tool/data wrong. The **`openbat-optimize`** skill
 MCP: `openbat_review { chatbotId, windowMinutes? }` (or omit `chatbotId` when pinned). OpenBat ships no scheduler — wire
 `openbat review` into your own cron / scheduled agent / CI for a daily cadence.
 
-### Flow 11 — Publish the system prompt (live, remote)
+### Flow 11 — Render, stage, and publish the system prompt
 
 For chatbots that **fetch their prompt from OpenBat at runtime** (`GET /api/v1/prompts`),
 the active prompt can be managed remotely — no redeploy:
 
 ```bash
-openbat prompts list                       # versions + which is active + kill-switch state
-openbat prompts publish --file prompt.txt  # create a version from the file + set it LIVE
-openbat prompts publish --text "You are…"  # inline (prefer --file for long prompts)
-openbat prompts activate <versionId>       # roll back/forward to a known version
-openbat prompts kill-switch --on           # emergency: SDK falls back to its hardcoded prompt
-openbat prompts kill-switch --off          # resume serving the active published prompt
-openbat prompts show <versionId>           # fetch a version's full template TEXT (list shows only hashes)
-openbat prompts active                     # what the server resolves to RIGHT NOW (confirm propagation)
-openbat prompts publish --file p.txt --wait  # block until the server confirms the new version is live
+openbat prompts list                            # versions + active + kill-switch state
+openbat prompts render --file prompt.txt \
+  --var company=Acme --var user.name=Nina       # local preview before staging/probing
+openbat prompts stage --file prompt.txt         # create a version WITHOUT activating
+openbat prompts publish --file prompt.txt       # create a version + set it LIVE
+openbat prompts publish --text "You are..."     # inline (prefer --file for long prompts)
+openbat prompts activate <versionId>            # roll back/forward to a known version
+openbat prompts kill-switch --on                # emergency: SDK falls back to hardcoded prompt
+openbat prompts kill-switch --off               # resume serving the active published prompt
+openbat prompts show <versionId>                # fetch a version's full template TEXT
+openbat prompts active                          # what the server resolves to RIGHT NOW
+openbat prompts publish --file p.txt --wait     # block until the server confirms live
 ```
+
+`render` is local-only and safe to run with any key. It detects `{{variable}}`
+placeholders, supports names with dots and hyphens (`{{user.name}}`,
+`{{plan-tier}}`), reports missing variables, and leaves missing placeholders
+unrendered. Use it before staging a candidate, before a probe/eval run, and
+before publishing from an agent.
 
 Writes need an **admin or PAT (write)** key. A publish/activate/kill-switch
 busts the server cache immediately; live SDK processes converge within their
-**~60s** fetch-cache TTL. MCP: `openbat_list_prompt_versions`,
+**~60s** fetch-cache TTL. `create-draft` is a legacy CLI alias for `stage`;
+new guidance should say **stage**. MCP: `openbat_render_prompt_template`,
+`openbat_list_prompt_versions`,
 `openbat_get_prompt_version`, `openbat_get_active_prompt`,
-`openbat_publish_prompt`, `openbat_activate_prompt_version`,
-`openbat_set_prompt_kill_switch`.
+`openbat_publish_prompt`, `openbat_create_draft_prompt` (staged version),
+`openbat_activate_prompt_version`, `openbat_set_prompt_kill_switch`.
 
 **Caveat:** this only changes the running bot if your app fetches its prompt
 from OpenBat. If you hardcode the prompt (and send `systemPromptTemplate` only
