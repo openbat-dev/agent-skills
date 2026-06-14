@@ -57,15 +57,21 @@ the response time of the OpenBat ingest endpoint.
 import { OpenBat, withOpenBat } from "@openbat/sdk";
 import { streamText } from "ai";
 
-const openbat = new OpenBat({ apiKey: process.env.OPENBAT_API_KEY! });
+const result = streamText({ model, system, messages });
 
-const result = await withOpenBat(openbat, { conversationId }, () =>
-  streamText({ model, system, messages }),
-);
+return withOpenBat(result.toDataStreamResponse(), {
+  apiKey: process.env.OPENBAT_API_KEY!,
+  conversationId,
+  messages,
+});
 ```
 
 `withOpenBat` auto-captures the streamed messages — no manual
 `recordMessages` call needed.
+
+For tool-using or skill-using chatbots, prefer an explicit `recordMessages`
+call in the model's `onFinish` callback. The wrapper cannot see tool calls,
+reasoning, loaded skills, or retrieved policy snippets.
 
 ## Verify
 
@@ -129,6 +135,34 @@ callback pattern: OpenBat pushes dashboard prompt updates back through the
 existing capture response, your app upserts the prompt into its own DB, and
 future requests read locally. Use `prompts.getSystem()` when you need the
 single-line runtime-fetch path or cannot host a prompt table.
+
+## Optional — skill-aware verification
+
+If the chatbot loads skills, policies, playbooks, or tool-fetched instructions,
+capture them on assistant messages:
+
+```ts
+await openbat.recordMessages({
+  conversationId,
+  messages: [{
+    role: "assistant",
+    content: assistantText,
+    tools,
+    reasoning,
+    skills: [{ source: "external", name: "refund-policy", version: "v3" }],
+    behaviorEvidence: [{
+      type: "external_skill_observed",
+      source: "kb.search",
+      name: "Refund policy",
+      text: "Annual refunds require support approval.",
+    }],
+  }],
+});
+```
+
+OpenBat also mines tool output and reasoning for policy-like evidence when
+`skills`/`behaviorEvidence` are absent, but explicit fields improve root-cause
+labels like ignored skill, stale skill, missing skill, or tool/data wrong.
 
 ## Gotchas
 

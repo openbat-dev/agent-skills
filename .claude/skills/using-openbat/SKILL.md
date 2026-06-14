@@ -235,6 +235,9 @@ openbat sdk verify --chatbot $CB --timeout 60
 ```
 
 The SDK uses the **ingest** key (`ob_live_*`), never the CLI/MCP credentials.
+For tool/skill-aware verification, capture assistant `tools`, `reasoning`,
+`skills`, and `behaviorEvidence` in explicit `recordMessages` calls; see
+`openbat-sdk-install`.
 
 ### Flow 10 — Daily eval → fix the chatbot
 
@@ -249,7 +252,9 @@ plus clusters of the top issues / flags / intents and failed outcomes — each
 issue cluster carrying representative conversation pointers with the analysis
 `reasoning` + verification fields. Drill into a representative with
 `openbat conversations show <id>` (now returns ALL analyses), then map the
-symptom to a fix. The **`openbat-optimize`** skill orchestrates the full loop
+symptom to a fix. Verification may include `managed_skill`,
+`external_skill_observed`, and root-cause labels such as ignored skill, followed
+stale skill, missing skill, or tool/data wrong. The **`openbat-optimize`** skill orchestrates the full loop
 (diagnose against the repo's system prompt / tools / retrieval → apply a PR).
 MCP: `openbat_review { chatbotId, windowMinutes? }` (or omit `chatbotId` when pinned). OpenBat ships no scheduler — wire
 `openbat review` into your own cron / scheduled agent / CI for a daily cadence.

@@ -83,14 +83,18 @@ the bot *could* have answered.
 ## 4. Map symptom → lever (the centerpiece)
 
 `answer_available = true` ⇒ the bot **could** have answered ⇒ it's a delivery
-failure (prompt / retrieval / tool), **not** a knowledge gap. `verification_source`
-then narrows which:
+failure (prompt / retrieval / tool / skill), **not** a knowledge gap.
+`verification_source` and `root_cause` then narrow which:
 
 | Cluster signal | `answer_available` | `verification_source` | Lever | Fix |
 |---|---|---|---|---|
 | Wrong/incomplete answer, info exists in docs | true | `docs` / `retrieval` | **Retrieval / docs** | Improve chunking/topK, add the doc, fix the index — *not* the prompt |
 | Bot refused/hedged though it had the data | true | `reasoning` / `chatbot_data` | **System prompt** | Loosen/clarify the instruction that caused the refusal |
 | Bot needed a tool but never called it | n/a | (tool gap) | **Tool logic / prompt** | Add tool-trigger guidance to the prompt, or fix the tool schema/description |
+| Bot ignored an active managed skill | true | `managed_skill` | **Managed skill / prompt** | Fix the skill if stale; otherwise add prompt/tool guidance to force following it |
+| Bot ignored retrieved external policy | true | `external_skill_observed` | **External skill/policy** | Generate a patch for the external `SKILL.md`/policy or import it into OpenBat |
+| Bot faithfully followed stale skill/policy | true | `docs` + `root_cause=followed_bad_skill` | **Skill/data** | Fix the skill or upstream data source — not the base prompt |
+| Repeated failure with no skill/tool support | false | `root_cause=no_supporting_skill_or_tool` | **New skill / docs** | Create a focused skill or add the missing policy/doc |
 | Invented facts not in any source | false | `hallucination` | **Prompt + retrieval** | Add a "say you don't know" guardrail; fill the knowledge gap |
 | Genuinely unanswerable (info doesn't exist) | false | `missing_knowledge` | **Docs / product** | Author the missing doc; or route to a human |
 | Recurring spike, no single root cause | n/a | n/a | **New analysis + alert** | `openbat analysis add` to track it, `openbat workflows create` to alert |
