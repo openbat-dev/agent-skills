@@ -73,13 +73,20 @@ openbat eval diff before.json after.json    # surfaces regressions + fixes; exit
 ## 3. Test a candidate prompt WITHOUT shipping
 
 ```bash
-openbat prompts create-draft --file new-prompt.txt   # creates a version, NOT live
-openbat eval run --suite golden.json --candidate <versionId>   # chatbot runs the draft
-openbat prompts activate <versionId>                  # ship only once the eval is clean
+openbat prompts render --file new-prompt.txt --var company=Acme  # local variable preview
+openbat prompts stage --file new-prompt.txt                      # creates a version, NOT live
+openbat eval run --suite golden.json --candidate <versionId>     # chatbot runs staged version
+openbat prompts activate <versionId>                             # ship only once eval is clean
 ```
 
-The chatbot must fetch the candidate via the SDK's `getSystemPrompt({
-versionOverride })` — forward the `{{candidate}}` adapter field as a header your
+`render` detects `{{variable}}` placeholders, supports names with dots/hyphens
+(`{{user.name}}`, `{{plan-tier}}`), and reports missing values before the eval
+burns tokens. `create-draft` is the legacy alias for `stage`; prefer `stage` in
+new agent output.
+
+The chatbot must fetch the candidate via the SDK's
+`client.prompts.getSystem({ versionOverride })` — forward the `{{candidate}}`
+adapter field as a header your
 route reads. Repo-hardcoded prompts: just edit the prompt locally and probe.
 
 ## 4. MCP equivalents
@@ -88,7 +95,9 @@ route reads. Repo-hardcoded prompts: just edit the prompt locally and probe.
 `openbat_await_analysis { conversationId }` (poll until `allComplete`; accepts the
 `obprobe_` id) → `openbat_get_conversation` (read the verdict). `eval` itself is
 client-orchestrated (file I/O + loop), so under MCP you compose it from those
-tools. `openbat_optimize_context` bootstraps the loop in one call.
+tools. Use `openbat_render_prompt_template` for the same local variable preview
+when operating through MCP. `openbat_optimize_context` bootstraps the loop in
+one call.
 
 ## Gotchas / safety rails
 
