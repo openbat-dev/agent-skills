@@ -13,21 +13,19 @@ AI-native reports, and run prompt experiments — all through a CLI
 (`@openbat/cli`) and an MCP server (`@openbat/mcp`) that share a single
 v1 HTTP surface.
 
-This is the **single comprehensive reference**. Per-flow skills exist for
-deeper guidance:
+This is the **single comprehensive reference** — it covers every flow (0–10).
+The per-flow skills below ship alongside it for deeper guidance; flows without a
+dedicated skill (analysis definitions, external users/orgs, AI reports,
+backtests/prompt publishing, org admin) are documented in this skill's body:
 - `openbat-onboarding` — create + onboard a chatbot (flow 0)
 - `openbat-settings` — keys, webhooks, metadata (flow 1)
-- `openbat-org-admin` — org rename + members + invitations
-- `openbat-analysis` — analysis definitions (flow 2)
 - `openbat-conversations` — time-windowed reads (flow 3)
-- `openbat-users-orgs` — external users + orgs health (flow 4)
 - `openbat-workflows` — workflow DSL → webhook (flow 5)
-- `openbat-reports` — create + chat with AI reports (flow 6)
-- `openbat-experiments` — backtests + prompt publishing (7+8)
 - `openbat-sdk-install` — install + verify SDK in a target project (flow 9)
 - `openbat-optimize` — daily eval → fix loop: `openbat review` + apply fixes (flow 10)
 - `openbat-eval` — active probe/eval validation loop before shipping a fix
 - `openbat-safe-mutations` — confirmation patterns, audit log, key hygiene
+- `openbat-plan-audit` — security pre-flight for change plans (ACL, cross-tenant, input validation/injection, SSRF, secrets)
 
 ## When to use this skill
 
