@@ -52,8 +52,9 @@ npx skills add openbat-dev/agent-skills@v0.1.0
 | [`openbat-optimize`](.claude/skills/openbat-optimize) | Daily eval → fix loop: pull the `openbat review` digest of recent failures, map each cluster to a lever (prompt / tools / retrieval / new analysis / alert), apply fixes in the chatbot's repo. |
 | [`openbat-eval`](.claude/skills/openbat-eval) | Active probe/eval loop: send synthetic test queries, read OpenBat verdicts, and validate prompt fixes before shipping. |
 | [`openbat-workflows`](.claude/skills/openbat-workflows) | Compile DSL templates (`flag-to-webhook`, `outcome-to-webhook`, `sentiment-drop-to-webhook`) into workflows. |
-| [`openbat-sdk-install`](.claude/skills/openbat-sdk-install) | Install + verify `@openbat/sdk` in Node / Next.js / Vercel AI SDK apps, including OpenBat-managed system prompts. |
-| [`openbat-safe-mutations`](.claude/skills/openbat-safe-mutations) | Cross-cutting safety rules — confirmation patterns, audit log review, key rotation hygiene. |
+| [`openbat-sdk-install`](.claude/skills/openbat-sdk-install) | Install + verify `@openbat/sdk` in Node / Next.js / Vercel AI SDK apps (incl. `openbat init` / `openbat wizard` + OpenBat-managed system prompts). |
+| [`openbat-skills-store`](.claude/skills/openbat-skills-store) | Create / version / read a chatbot's managed skills (the `openbat_*_skill` MCP tools, REST, and the SDK `skills.get` runtime read). |
+| [`openbat-safe-mutations`](.claude/skills/openbat-safe-mutations) | Cross-cutting safety rules — confirmation patterns, `--dry-run`, `openbat doctor`, audit log review, key rotation hygiene. |
 | [`openbat-plan-audit`](.claude/skills/openbat-plan-audit) | Audit implementation plans against recurring failure patterns (cross-tenant IDOR, missing rate limits, missing role checks, SSRF, race conditions, input validation). |
 
 ## Prereqs
