@@ -5,3 +5,9 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Local-only skill authoring tooling and eval artifacts (not part of the published skill set)
+.claude/skills/skill-creator/
+.claude/skills/*-workspace/
+.claude/commands/
+__pycache__/
