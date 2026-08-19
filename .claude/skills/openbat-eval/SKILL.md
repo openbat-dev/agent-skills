@@ -99,6 +99,19 @@ tools. Use `openbat_render_prompt_template` for the same local variable preview
 when operating through MCP. `openbat_optimize_context` bootstraps the loop in
 one call.
 
+## 5. Replay vs probes (both isolate from organic analytics)
+
+**Probes** test *new* synthetic queries: you drive the chatbot with fresh
+questions, capture as `kind=probe`, and read the verdict. **Replay** re-runs
+*real historical* conversations against changed configuration (different models,
+prompts, or parameters): materialized conversations use `traffic_kind='replay'`.
+Both are excluded from organic `review`/analytics — probes via `kind=probe`,
+replay via `traffic_kind='replay'`. Use probes for golden-suite regression;
+use replay when you need to re-grade the same labeled failures before shipping
+a lever change. See **`openbat-replay`** for `openbat replay run` /
+`--optimize-for` / frozen tools, and **`openbat-optimize`** for the
+measure-before-edit loop.
+
 ## Gotchas / safety rails
 
 - **Synthetic isolation is the point** — probes are `kind=probe`, hidden from

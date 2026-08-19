@@ -12,8 +12,8 @@ These skills teach an agent how to use the OpenBat CLI
 OpenBat MCP server ([`@openbat/mcp`](https://www.npmjs.com/package/@openbat/mcp)),
 and the OpenBat SDK ([`@openbat/sdk`](https://www.npmjs.com/package/@openbat/sdk))
 end-to-end — read analytics, manage settings and webhooks, build
-workflows, mint credentials, run experiments, manage prompts safely,
-and install the SDK in a target app.
+workflows, mint credentials, run replay experiments on labeled traffic,
+manage prompts safely, and install the SDK in a target app.
 
 ## Install
 
@@ -38,7 +38,7 @@ npx skills add openbat-dev/agent-skills --skill using-openbat
 Pin a specific version (recommended for reproducibility):
 
 ```bash
-npx skills add openbat-dev/agent-skills@v0.1.0
+npx skills add openbat-dev/agent-skills@v0.2.0
 ```
 
 ## What's included
@@ -51,6 +51,8 @@ npx skills add openbat-dev/agent-skills@v0.1.0
 | [`openbat-conversations`](.claude/skills/openbat-conversations) | Query conversations + analyses, time-filtered (default last 7 days). |
 | [`openbat-optimize`](.claude/skills/openbat-optimize) | Daily eval → fix loop: pull the `openbat review` digest of recent failures, map each cluster to a lever (prompt / tools / retrieval / new analysis / alert), apply fixes in the chatbot's repo. |
 | [`openbat-eval`](.claude/skills/openbat-eval) | Active probe/eval loop: send synthetic test queries, read OpenBat verdicts, and validate prompt fixes before shipping. |
+| [`openbat-replay`](.claude/skills/openbat-replay) | Replay labeled real conversations against other models/prompts (`openbat replay` / `openbat_replay_*`, CLI/MCP 1.0.3). Frozen tools in v1; SDK has no customer replay API. |
+| [`openbat-bestpractices-chatbot`](.claude/skills/openbat-bestpractices-chatbot) | Chatbot quality principles (tool budget, convergence, proof-carrying numbers) for prompt/tool design. |
 | [`openbat-workflows`](.claude/skills/openbat-workflows) | Compile DSL templates (`flag-to-webhook`, `outcome-to-webhook`, `sentiment-drop-to-webhook`) into workflows. |
 | [`openbat-sdk-install`](.claude/skills/openbat-sdk-install) | Install + verify `@openbat/sdk` in Node / Next.js / Vercel AI SDK apps (incl. `openbat init` / `openbat wizard` + OpenBat-managed system prompts). |
 | [`openbat-skills-store`](.claude/skills/openbat-skills-store) | Create / version / read a chatbot's managed skills (the `openbat_*_skill` MCP tools, REST, and the SDK `skills.get` runtime read). |
@@ -82,6 +84,7 @@ agent's context window when it's loaded. They cover:
 - The four-kind auth ladder (`ob_read_*` < `ob_admin_*` < `ob_pat_*`).
 - Plaintext-shown-once-to-stderr conventions for mint commands.
 - The `dryRun` safety pattern for destructive operations.
+- Replay vs probe vs backtest: same real turns (`openbat replay`), synthetic questions (`openbat probe`), or flag tallies (`openbat backtests`).
 - The prompt render → stage → validate → publish workflow.
 - The org-private nature of AI reports (no public sharing).
 - Audit log + rate-limit recovery patterns.

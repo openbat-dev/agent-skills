@@ -99,6 +99,13 @@ failure (prompt / retrieval / tool / skill), **not** a knowledge gap.
 | Genuinely unanswerable (info doesn't exist) | false | `missing_knowledge` | **Docs / product** | Author the missing doc; or route to a human |
 | Recurring spike, no single root cause | n/a | n/a | **New analysis + alert** | `openbat analysis add` to track it, `openbat workflows create` to alert |
 
+Before you edit anything, the lever choice can now be **measured** on real
+historical traffic: label the failing conversations, run
+`openbat replay run --label <name> --model <a> --model <b> --optimize-for flags`,
+and read `openbat replay diff <experimentId>` to see deltas versus the baseline.
+v1 tools are frozen (no live tool calls). See **`openbat-replay`**. Only then
+apply the fix (section 5) and validate with probes/backtests (section 6).
+
 ## 5. Propose + apply fixes, grouped by lever
 
 For each lever group, list the proposed edit + the **evidence** as conversation

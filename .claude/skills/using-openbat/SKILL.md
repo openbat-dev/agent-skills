@@ -13,7 +13,7 @@ AI-native reports, and run prompt experiments — all through a CLI
 (`@openbat/cli`) and an MCP server (`@openbat/mcp`) that share a single
 v1 HTTP surface.
 
-This is the **single comprehensive reference** — it covers every flow (0–10).
+This is the **single comprehensive reference** — it covers every flow (0–12).
 The per-flow skills below ship alongside it for deeper guidance; flows without a
 dedicated skill (analysis definitions, external users/orgs, AI reports,
 backtests/prompt publishing, org admin) are documented in this skill's body:
@@ -25,6 +25,7 @@ backtests/prompt publishing, org admin) are documented in this skill's body:
 - `openbat-skills-store` — create/version/read a chatbot's managed skills (`openbat_*_skill` MCP tools + SDK `skills.get`)
 - `openbat-optimize` — daily eval → fix loop: `openbat review` + apply fixes (flow 10)
 - `openbat-eval` — active probe/eval validation loop before shipping a fix
+- `openbat-replay` — replay labeled real conversations against other models/prompts (`openbat replay` / `openbat_replay_*`)
 - `openbat-safe-mutations` — confirmation patterns, audit log, key hygiene
 - `openbat-plan-audit` — security pre-flight for change plans (ACL, cross-tenant, input validation/injection, SSRF, secrets)
 
@@ -35,6 +36,7 @@ backtests/prompt publishing, org admin) are documented in this skill's body:
 - Pulling conversation analytics, sentiment, flags, or outcomes
 - Creating workflows that fire Slack/Discord/custom webhooks
 - Running prompt experiments, rendering prompt variables, and staging/publishing prompt versions
+- Replaying labeled real conversations against other models (`openbat replay`)
 - Adding @openbat/sdk to a Next.js / Node / AI SDK project
 
 ## The four key kinds
@@ -220,9 +222,19 @@ openbat reports create --chatbot $CB --name "Q3 retention"
 Reports are **org-private** — only members of the chatbot's org can open the
 URL. No public sharing.
 
-### Flow 7+8 — Experiments (backtests + prompt publishing)
+### Flow 7+8 — Experiments (backtests + replay + prompt publishing)
 
-Backtests are available from the public v1 CLI/MCP surface: create a run with a PAT, poll status, then publish only after the verdict tally is clean. The dashboard remains the richer visual workflow for experiment review.
+Backtests are available from the public v1 CLI/MCP surface: create a run with a PAT, poll status, then publish only after the verdict tally is clean.
+
+**Replay experiments** (sidebar **Experiments**, not Chatbot Management A/B) re-run a **labeled** set of real conversations against other OpenRouter models. `@openbat/cli` / `@openbat/mcp` **1.0.3**:
+
+```bash
+openbat labels add <conversationId…> --label refunds
+openbat replay run --label refunds --model openai/gpt-4o --optimize-for flags --wait
+openbat replay diff <experimentId>
+```
+
+MCP: `openbat_replay_run` / `openbat_replay_status` / `openbat_replay_list` / `openbat_replay_results`. Tools stay **frozen** in v1 (no live tool calls). See **`openbat-replay`**. The dashboard remains the richer visual workflow.
 
 ### Flow 9 — Add @openbat/sdk to a production app
 
@@ -234,9 +246,10 @@ openbat sdk verify --chatbot $CB --timeout 60
 ```
 
 The SDK uses the **ingest** key (`ob_live_*`), never the CLI/MCP credentials.
-For tool/skill-aware verification, capture assistant `tools`, `reasoning`,
-`skills`, and `behaviorEvidence` in explicit `recordMessages` calls; see
-`openbat-sdk-install`.
+For tool/skill-aware verification **and replay fidelity**, capture assistant
+`tools`, `model`, `params`, `toolDefinitions`, `reasoning`, `skills`, and
+`behaviorEvidence` in explicit `recordMessages` calls. Keep `kind` as
+`organic` or `probe` — never `replay`. See `openbat-sdk-install`.
 
 ### Flow 10 — Daily eval → fix the chatbot
 
@@ -311,6 +324,10 @@ openbat backtests status <backtestId>   # poll: still_flagged / resolved / new_f
 Replays your **flagged** conversations under a candidate prompt version and
 tallies whether each flag would now resolve — the eval loop-closer before you
 publish. MCP: `openbat_create_backtest`, `openbat_get_backtest_status`.
+
+To compare **models** (not just a candidate prompt) on a labeled set of the
+same real turns, use **`openbat-replay`** (`openbat replay run`). Backtests
+and replay experiments are different queues.
 
 ## Safety rails (always apply these)
 

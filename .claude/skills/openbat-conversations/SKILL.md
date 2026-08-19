@@ -38,6 +38,11 @@ openbat analytics sentiment --days 30
 
 # Daily eval digest (aggregate "what went wrong" — see openbat-optimize):
 openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
+
+# Labels (curate sets for replay experiments — see openbat-replay):
+openbat labels list
+openbat labels create refunds [--color red]
+openbat labels add <conversationId…> --label refunds
 ```
 
 ## MCP
@@ -50,6 +55,8 @@ openbat review --since 24h          # also 45m, 6h, 7d (max 30d)
 | `openbat_analytics_overview` | `{ chatbotId: uuid }` |
 | `openbat_analytics_sentiment` | `{ chatbotId: uuid, days?: 1-90 }` |
 | `openbat_review`             | `{ chatbotId: uuid, windowMinutes?: 1-43200 }` |
+| `openbat_list_labels`        | `{ chatbotId?: uuid }` |
+| `openbat_create_label`       | `{ name, color? }` (admin) — then `openbat_assign_label` / `openbat_unassign_label` |
 
 If the MCP server is pinned with `OPENBAT_CHATBOT_ID`, per-chatbot tools can omit `chatbotId`; otherwise pass the id returned by `openbat_list_chatbots`.
 
@@ -74,6 +81,10 @@ This is how you read **why** a message was flagged.
 For the aggregate "what went wrong over a window" view (top issues / flags /
 outcomes with deltas + representative pointers), use `openbat review` and the
 **`openbat-optimize`** skill.
+
+Label conversations, then **`openbat-replay`** to re-grade the same real turns
+against other models. Replay transcripts (`traffic_kind='replay'`) are excluded
+from this list's organic default — they exist only for experiment comparison.
 
 ## Gotchas
 
