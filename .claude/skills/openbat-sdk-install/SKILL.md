@@ -36,7 +36,7 @@ a fresh one via `openbat settings keys rotate-ingest --chatbot $CB`.
 ## Install
 
 ```bash
-npm install @openbat/sdk
+npm install @openbat/sdk@1.1.0
 ```
 
 ## Environment
@@ -198,10 +198,23 @@ OpenBat also mines tool output and reasoning for policy-like evidence when
 `skills`/`behaviorEvidence` are absent, but explicit fields improve root-cause
 labels like ignored skill, stale skill, missing skill, or tool/data wrong.
 
+## Replay fidelity (`@openbat/sdk` 1.1.0)
+
+Replay experiments are a **dashboard / CLI / MCP** feature. The SDK has no
+customer replay API. Keep sending `kind: "organic"` or `"probe"`. Ingest
+rejects `kind: "replay"` on SDK keys with a 400.
+
+Capture `model`, `params`, `tools`, and `toolDefinitions` on organic traffic
+so labeled conversations stay faithful. Replay v1 does **not** re-invoke
+tools — captured tool I/O is inlined as text. Prefer
+`assistantMessageFromAiSdk()` / `toolDefinitionsFromAiSdk()` from an AI SDK
+`onFinish` payload. See **`openbat-replay`**.
+
 ## Gotchas
 
 - The SDK uses ONLY the ingest key. Never paste `ob_read_*` /
   `ob_admin_*` / `ob_pat_*` into the SDK config.
+- Never send `kind: "replay"` from the SDK.
 - `recordMessages` retries: zero. If you need durability, pair with
   Vercel Workflow DevKit or a queue.
 - Custom metadata (user / organization / session / custom maps) auto-
